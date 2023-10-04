@@ -6,6 +6,7 @@ spec:
   selector:
     matchLabels:
       app: php-apache
+      run: php-apache
   template:
     metadata:
       labels:
