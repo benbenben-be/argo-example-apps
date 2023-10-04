@@ -5,10 +5,11 @@ metadata:
 spec:
   selector:
     matchLabels:
-      run: php-apache
+      app: php-apache
   template:
     metadata:
       labels:
+        app: php-apache
         run: php-apache
       # annotations:
       #   sidecar.istio.io/rewriteAppHTTPProbers: "false"
