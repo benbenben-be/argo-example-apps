@@ -25,3 +25,9 @@ spec:
             port: 8001
           initialDelaySeconds: 5
           periodSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /foo
+            port: 8001
+          initialDelaySeconds: 5
+          periodSeconds: 5
