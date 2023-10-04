@@ -2,6 +2,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: istio-health-rewrite
+  namespace: istio-io-health-rewrite
 spec:
   maxReplicas: 10
   metrics:
