@@ -3,6 +3,7 @@ kind: Service
 metadata:
   name: php-apache
   labels:
+    app: php-apache
     run: php-apache
 spec:
   ports:
