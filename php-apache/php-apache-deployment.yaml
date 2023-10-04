@@ -17,7 +17,7 @@ spec:
       - name: php-apache
         image: registry.k8s.io/hpa-example
         ports:
-        - containerPort: 80
+        - containerPort: 8080
         resources:
           limits:
             cpu: 500m
@@ -27,7 +27,7 @@ spec:
           failureThreshold: 3
           httpGet:
             path: /
-            port: 80
+            port: 8080
             scheme: HTTP
           initialDelaySeconds: 10
           periodSeconds: 10
@@ -37,7 +37,7 @@ spec:
           failureThreshold: 3
           httpGet:
             path: /
-            port: 80
+            port: 8080
             scheme: HTTP
           initialDelaySeconds: 10
           periodSeconds: 10
