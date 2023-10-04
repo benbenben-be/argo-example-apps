@@ -4,6 +4,7 @@ metadata:
   name: liveness-http
   namespace: istio-io-health-rewrite
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: liveness-http
