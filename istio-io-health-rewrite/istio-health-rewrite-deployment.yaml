@@ -18,10 +18,10 @@ spec:
       - name: liveness-http
         image: docker.io/istio/health:example
         ports:
-        - containerPort: 8080
+        - containerPort: 8001
         livenessProbe:
           httpGet:
             path: /foo
-            port: 8080
-          initialDelaySeconds: 15
+            port: 8001
+          initialDelaySeconds: 5
           periodSeconds: 5
