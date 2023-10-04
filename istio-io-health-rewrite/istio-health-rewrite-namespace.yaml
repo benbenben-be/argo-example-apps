@@ -3,4 +3,4 @@ kind: Namespace
 metadata:
   name: istio-io-health-rewrite
   labels:
-    istio-injection: enabled
+    istio-injection: disabled
