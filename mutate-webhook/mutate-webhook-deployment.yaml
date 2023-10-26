@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: nginx-container
-          image: notdocker.io/nginx:1.19.3
+          image: docker.io/nginx:1.19.3
           ports:
             - containerPort: 80
           resources:
