@@ -7,7 +7,6 @@ metadata:
     app.kubernetes.io/name: {{ .Chart.Name }}-working-2
     app.kubernetes.io/instance: {{ .Chart.Name }}-working-2
     app.kubernetes.io/part-of: nginx-fail-app
-    tests: true
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
