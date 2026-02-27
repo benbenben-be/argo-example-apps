@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}-working-2
+  labels:
+    app: {{ .Chart.Name }}-working-2
+    app.kubernetes.io/name: {{ .Chart.Name }}-working-2
+    app.kubernetes.io/instance: {{ .Chart.Name }}-working-2
+    app.kubernetes.io/part-of: nginx-fail-app
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}-working-2
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}-working-2
+    spec:
+      containers:
+      - name: nginx
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: 80
