@@ -1,0 +1,35 @@
+{{- if .Values.tests.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: {{ .Chart.Name }}-test-
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  template:
+    spec:
+      containers:
+      - name: test
+        image: {{ .Values.tests.image }}
+        command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Testing {{ .Chart.Name }} service with INTENTIONALLY FAILING test..."
+          sleep 5
+          # This will fail because the endpoint doesn't exist (404)
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://{{ .Chart.Name }}.{{ .Release.Namespace }}.svc.cluster.local/this-does-not-exist)
+          echo "Received HTTP code: $HTTP_CODE"
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✓ Test passed (HTTP $HTTP_CODE)"
+            exit 0
+          else
+            echo "✗ TEST FAILED - Expected HTTP 200 but got $HTTP_CODE"
+            echo "This test is designed to fail to demonstrate PostSync hook behavior"
+            exit 1
+          fi
+      restartPolicy: Never
+  backoffLimit: 2
+  activeDeadlineSeconds: 120
+{{- end }}
