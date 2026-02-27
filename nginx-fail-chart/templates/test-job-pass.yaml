@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  generateName: {{ .Chart.Name }}-test-pass-
+  name: {{ .Chart.Name }}-test-pass
   labels:
     app: {{ .Chart.Name }}-working
     app.kubernetes.io/name: {{ .Chart.Name }}-working
