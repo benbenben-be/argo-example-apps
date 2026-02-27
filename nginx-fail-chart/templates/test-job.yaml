@@ -3,6 +3,12 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   generateName: {{ .Chart.Name }}-test-
+  labels:
+    app: {{ .Chart.Name }}
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ .Chart.Name }}
+    app.kubernetes.io/part-of: nginx-fail-app
+    app.kubernetes.io/component: test
   annotations:
     argocd.argoproj.io/hook: PostSync
     argocd.argoproj.io/hook-delete-policy: BeforeHookCreation

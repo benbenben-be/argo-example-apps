@@ -4,6 +4,9 @@ metadata:
   name: {{ .Chart.Name }}-working
   labels:
     app: {{ .Chart.Name }}-working
+    app.kubernetes.io/name: {{ .Chart.Name }}-working
+    app.kubernetes.io/instance: {{ .Chart.Name }}-working
+    app.kubernetes.io/part-of: nginx-fail-app
 spec:
   type: {{ .Values.service.type }}
   selector:
