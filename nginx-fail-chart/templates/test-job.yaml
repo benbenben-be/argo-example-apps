@@ -30,6 +30,6 @@ spec:
             exit 1
           fi
       restartPolicy: Never
-  backoffLimit: 2
+  backoffLimit: 0
   activeDeadlineSeconds: 120
 {{- end }}
