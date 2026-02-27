@@ -1,0 +1,32 @@
+{{- if .Values.tests.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: {{ .Chart.Name }}-test-
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  template:
+    spec:
+      containers:
+      - name: test
+        image: {{ .Values.tests.image }}
+        command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Testing {{ .Chart.Name }} service..."
+          sleep 5
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://{{ .Chart.Name }}.{{ .Release.Namespace }}.svc.cluster.local)
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✓ {{ .Chart.Name }} responding (HTTP $HTTP_CODE)"
+            exit 0
+          else
+            echo "✗ {{ .Chart.Name }} test failed (HTTP $HTTP_CODE)"
+            exit 1
+          fi
+      restartPolicy: Never
+  backoffLimit: 2
+  activeDeadlineSeconds: 120
+{{- end }}

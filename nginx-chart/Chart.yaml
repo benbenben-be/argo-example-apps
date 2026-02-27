@@ -1,0 +1,6 @@
+apiVersion: v2
+name: nginx
+description: Nginx with PostSync tests
+type: application
+version: 1.0.0
+appVersion: "1.25"
