@@ -1,0 +1,45 @@
+{{- if .Values.tests.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: test-{{ .Chart.Name }}-working-3-health
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}-working-3
+    app.kubernetes.io/component: test
+    app.kubernetes.io/part-of: nginx-fail-app
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    test-type: post-deployment
+    test-category: smoke
+    test-suite: {{ .Chart.Name }}-tests
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "10"
+    description: "Post-deployment health check for {{ .Chart.Name }}-working-3"
+    test-documentation: "Validates nginx-working-3 service HTTP endpoint"
+spec:
+  template:
+    spec:
+      containers:
+      - name: test
+        image: {{ .Values.tests.image }}
+        command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Testing {{ .Chart.Name }}-working-3 service (should PASS)..."
+          sleep 5
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://{{ .Chart.Name }}-working-3.{{ .Release.Namespace }}.svc.cluster.local)
+          echo "Received HTTP code: $HTTP_CODE"
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✓ TEST PASSED - {{ .Chart.Name }}-working-3 responding correctly (HTTP $HTTP_CODE)"
+            exit 0
+          else
+            echo "✗ TEST FAILED - Expected HTTP 200 but got $HTTP_CODE"
+            exit 1
+          fi
+      restartPolicy: Never
+  backoffLimit: 0
+  activeDeadlineSeconds: 120
+{{- end }}
