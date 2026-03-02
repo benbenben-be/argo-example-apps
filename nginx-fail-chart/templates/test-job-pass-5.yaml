@@ -2,22 +2,18 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: test-{{ .Chart.Name }}-working-5-health
+  name: {{ .Chart.Name }}-test-pass-5
   labels:
+    app: {{ .Chart.Name }}-working-5
     app.kubernetes.io/name: {{ .Chart.Name }}-working-5
-    app.kubernetes.io/component: test
+    app.kubernetes.io/instance: {{ .Chart.Name }}-working-5
     app.kubernetes.io/part-of: nginx-fail-app
-    app.kubernetes.io/instance: {{ .Release.Name }}
-    app.kubernetes.io/managed-by: {{ .Release.Service }}
-    test-type: post-deployment
-    test-category: smoke
-    test-suite: {{ .Chart.Name }}-tests
+    app.kubernetes.io/component: test
   annotations:
     argocd.argoproj.io/hook: PostSync
     argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
-    argocd.argoproj.io/sync-wave: "10"
-    description: "Post-deployment health check for {{ .Chart.Name }}-working-5"
-    test-documentation: "Validates nginx-working-5 service HTTP endpoint"
+    argocd.argoproj.io/sync-wave: "1"
+    app.kubernetes.io/name: "test-nginx-fail-working-5"
 spec:
   template:
     spec:
