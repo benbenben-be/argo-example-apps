@@ -1,0 +1,41 @@
+{{- if .Values.tests.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Chart.Name }}-test-pass-7
+  labels:
+    app: {{ .Chart.Name }}-working-7
+    app.kubernetes.io/name: {{ .Chart.Name }}-working-7
+    app.kubernetes.io/instance: {{ .Chart.Name }}-working-7
+    app.kubernetes.io/part-of: nginx-fail-app
+    app.kubernetes.io/component: test
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "1"
+    app.kubernetes.io/name: "test-nginx-fail-working-7"
+spec:
+  template:
+    spec:
+      containers:
+      - name: test
+        image: {{ .Values.tests.image }}
+        command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Testing {{ .Chart.Name }}-working-7 service (should PASS)..."
+          sleep 5
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://{{ .Chart.Name }}-working-7.{{ .Release.Namespace }}.svc.cluster.local)
+          echo "Received HTTP code: $HTTP_CODE"
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✓ TEST PASSED - {{ .Chart.Name }}-working-7 responding correctly (HTTP $HTTP_CODE)"
+            exit 0
+          else
+            echo "✗ TEST FAILED - Expected HTTP 200 but got $HTTP_CODE"
+            exit 1
+          fi
+      restartPolicy: Never
+  backoffLimit: 0
+  activeDeadlineSeconds: 120
+{{- end }}
