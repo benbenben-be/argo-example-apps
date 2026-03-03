@@ -11,10 +11,11 @@ metadata:
     app.kubernetes.io/component: test
   annotations:
     argocd.argoproj.io/hook: PostSync
-    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
     argocd.argoproj.io/sync-wave: "1"
     app.kubernetes.io/name: "test-nginx-fail-working"
 spec:
+  ttlSecondsAfterFinished: 3600
   template:
     spec:
       containers:
