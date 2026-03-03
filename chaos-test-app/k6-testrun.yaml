@@ -1,0 +1,29 @@
+apiVersion: k6.io/v1alpha1
+kind: TestRun
+metadata:
+  name: chaos-resilience-test
+  namespace: chaos-test
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  parallelism: 1
+  script:
+    configMap:
+      name: k6-chaos-test
+      file: test.js
+  runner:
+    serviceAccountName: chaos-test-sa
+    image: grafana/k6:latest
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
+    env:
+    - name: K6_OUT
+      value: "json=/tmp/k6-results.json"
+  # This job will trigger chaos injection mid-test
+  separate: true

@@ -1,0 +1,87 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: chaos-orchestrator
+  namespace: chaos-test
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  ttlSecondsAfterFinished: 300  # Keep for 5 minutes after completion
+  template:
+    metadata:
+      name: chaos-orchestrator
+    spec:
+      serviceAccountName: chaos-test-sa
+      restartPolicy: Never
+      containers:
+      - name: orchestrator
+        image: bitnami/kubectl:latest
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            set -e
+            
+            echo "========================================="
+            echo "Chaos Engineering Test Started"
+            echo "========================================="
+            
+            # Wait for httpbin to be ready
+            echo "[0s] Waiting for httpbin pods to be ready..."
+            kubectl wait --for=condition=ready pod -l app=httpbin -n chaos-test --timeout=60s
+            
+            # Phase 1: Baseline (5 seconds)
+            echo "[0-5s] Phase 1: Baseline - No chaos, measuring normal performance"
+            sleep 5
+            
+            # Phase 2: Inject Chaos (starting at 5s)
+            echo "[5s] Phase 2: INJECTING POD-KILL CHAOS"
+            kubectl apply -f - <<EOF
+            apiVersion: chaos-mesh.org/v1alpha1
+            kind: PodChaos
+            metadata:
+              name: pod-kill-httpbin
+              namespace: chaos-test
+            spec:
+              action: pod-kill
+              mode: one
+              duration: "5s"
+              selector:
+                namespaces:
+                  - chaos-test
+                labelSelectors:
+                  app: httpbin
+              scheduler:
+                cron: "@every 3s"
+            EOF
+            
+            echo "✓ PodChaos injected - killing 1 pod every 3 seconds"
+            
+            # Let chaos run for 5 seconds
+            echo "[5-10s] Chaos is active - K6 is measuring impact"
+            sleep 5
+            
+            # Phase 3: Stop Chaos (at 10s)
+            echo "[10s] Phase 3: STOPPING CHAOS"
+            kubectl delete podchaos pod-kill-httpbin -n chaos-test --ignore-not-found=true
+            
+            echo "✓ Chaos stopped"
+            
+            # Phase 4: Recovery (10-15s)
+            echo "[10-15s] Phase 4: Recovery - Measuring return to normal"
+            sleep 5
+            
+            # Summary
+            echo "========================================="
+            echo "Chaos Test Completed Successfully!"
+            echo "========================================="
+            echo "Timeline:"
+            echo "  0-5s:   Baseline (no chaos)"
+            echo "  5-10s:  Chaos active (pod kills)"
+            echo "  10-15s: Recovery period"
+            echo ""
+            echo "Check K6 TestRun logs for detailed metrics"
+            echo "========================================="
+            
+            # Wait a moment for K6 to finish
+            sleep 3

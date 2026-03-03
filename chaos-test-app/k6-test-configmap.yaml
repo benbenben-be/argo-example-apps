@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k6-chaos-test
+  namespace: chaos-test
+data:
+  test.js: |
+    import http from 'k6/http';
+    import { check, sleep } from 'k6';
+    import { Counter, Trend } from 'k6/metrics';
+
+    // Custom metrics
+    const failureCounter = new Counter('failed_requests');
+    const successCounter = new Counter('successful_requests');
+    const responseTrend = new Trend('response_time_ms');
+
+    export const options = {
+      duration: '15s',
+      vus: 10,  // 10 virtual users = ~100 req/s
+      thresholds: {
+        // We expect some failures during chaos
+        'http_req_failed': ['rate<0.7'],  // Less than 70% failure allowed
+        'http_req_duration': ['p(95)<500'], // 95% under 500ms
+      },
+    };
+
+    export default function () {
+      const startTime = Date.now();
+      const res = http.get('http://httpbin.chaos-test.svc.cluster.local/status/200');
+      const duration = Date.now() - startTime;
+      
+      const passed = check(res, {
+        'status is 200': (r) => r.status === 200,
+        'response time < 500ms': (r) => r.timings.duration < 500,
+      });
+      
+      if (passed) {
+        successCounter.add(1);
+      } else {
+        failureCounter.add(1);
+        console.log(`[${new Date().toISOString()}] Request failed - Status: ${res.status}, Duration: ${duration}ms`);
+      }
+      
+      responseTrend.add(duration);
+      
+      sleep(0.1); // 100ms between requests per VU
+    }
+
+    export function handleSummary(data) {
+      console.log('=== CHAOS TEST SUMMARY ===');
+      console.log(`Total Requests: ${data.metrics.http_reqs.values.count}`);
+      console.log(`Successful: ${data.metrics.successful_requests ? data.metrics.successful_requests.values.count : 0}`);
+      console.log(`Failed: ${data.metrics.failed_requests ? data.metrics.failed_requests.values.count : 0}`);
+      console.log(`Failure Rate: ${(data.metrics.http_req_failed.values.rate * 100).toFixed(2)}%`);
+      console.log(`Avg Response Time: ${data.metrics.http_req_duration.values.avg.toFixed(2)}ms`);
+      console.log(`p95 Response Time: ${data.metrics.http_req_duration.values['p(95)'].toFixed(2)}ms`);
+      console.log(`p99 Response Time: ${data.metrics.http_req_duration.values['p(99)'].toFixed(2)}ms`);
+      console.log('========================');
+      
+      return {
+        'stdout': JSON.stringify(data, null, 2),
+      };
+    }
