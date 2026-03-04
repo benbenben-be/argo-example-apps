@@ -5,7 +5,7 @@ metadata:
   namespace: chaos-test
   annotations:
     argocd.argoproj.io/hook: PostSync
-    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    # No delete policy - keep results visible
 spec:
   parallelism: 1
   script:
