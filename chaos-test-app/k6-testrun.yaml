@@ -26,4 +26,4 @@ spec:
     - name: K6_OUT
       value: "json=/tmp/k6-results.json"
   separate: true
-  cleanup: preStop  # Clean up job after completion
+  # No cleanup - keep last test results visible
