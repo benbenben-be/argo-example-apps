@@ -62,7 +62,7 @@ spec:
             
             # Phase 3: Stop Chaos (at 10s)
             echo "[10s] Phase 3: STOPPING CHAOS"
-            kubectl delete podchaos pod-kill-httpbin -n chaos-test --ignore-not-found=true
+            kubectl delete podchaos -l app=chaos-test -n chaos-test --all --ignore-not-found=true
             
             echo "✓ Chaos stopped"
             
