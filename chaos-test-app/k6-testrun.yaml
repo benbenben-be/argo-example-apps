@@ -25,5 +25,5 @@ spec:
     env:
     - name: K6_OUT
       value: "json=/tmp/k6-results.json"
-  # This job will trigger chaos injection mid-test
   separate: true
+  cleanup: preStop  # Clean up job after completion
