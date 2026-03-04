@@ -35,34 +35,33 @@ spec:
             sleep 5
             
             # Phase 2: Inject Chaos (starting at 5s)
-            echo "[5s] Phase 2: INJECTING POD-KILL CHAOS"
+            echo "[5s] Phase 2: INJECTING POD-FAILURE CHAOS"
             
-            # Kill pods multiple times during the 5 second window
-            for i in 1 2; do
-              kubectl apply -f - <<EOF
+            # Inject pod failure (restarts container without creating new pod)
+            kubectl apply -f - <<EOF
             apiVersion: chaos-mesh.org/v1alpha1
             kind: PodChaos
             metadata:
-              name: pod-kill-httpbin-$i
+              name: pod-failure-httpbin
               namespace: chaos-test
             spec:
-              action: pod-kill
+              action: pod-failure
               mode: one
+              duration: "5s"
               selector:
                 namespaces:
                   - chaos-test
                 labelSelectors:
                   app: httpbin
             EOF
-              echo "✓ PodChaos $i injected - killing 1 pod"
-              sleep 2.5
-            done
+            echo "✓ PodChaos injected - failing container (restarts in place, not new pod)"
+            sleep 5
             
             echo "[5-10s] Chaos is active - K6 is measuring impact"
             
             # Phase 3: Stop Chaos (at 10s)
             echo "[10s] Phase 3: STOPPING CHAOS"
-            kubectl delete podchaos -l app=chaos-test -n chaos-test --all --ignore-not-found=true
+            kubectl delete podchaos pod-failure-httpbin -n chaos-test --ignore-not-found=true
             
             echo "✓ Chaos stopped"
             
