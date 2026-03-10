@@ -11,4 +11,7 @@ service:
 
 tests:
   enabled: true
-  image: curlimages/curl:latest
+  image: curlimages/curl:8.6.0
+  # URL of the central Testing Service API (override in ArgoCD Application values)
+  testingApiUrl: "http://testing-service-api.default.svc.cluster.local:8082"
+  suite: smoke

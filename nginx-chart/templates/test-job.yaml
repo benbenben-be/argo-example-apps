@@ -1,32 +1,53 @@
 {{- if .Values.tests.enabled }}
+# PostSync hook — calls the central Testing Service API which creates and tracks
+# a test Job in this cluster. The API returns a run ID for status polling.
 apiVersion: batch/v1
 kind: Job
 metadata:
-  generateName: {{ .Chart.Name }}-test-
+  name: {{ .Chart.Name }}-test-trigger
   annotations:
     argocd.argoproj.io/hook: PostSync
-    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   template:
     spec:
-      containers:
-      - name: test
-        image: {{ .Values.tests.image }}
-        command:
-        - /bin/sh
-        - -c
-        - |
-          echo "Testing {{ .Chart.Name }} service..."
-          sleep 5
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://{{ .Chart.Name }}.{{ .Release.Namespace }}.svc.cluster.local)
-          if [ "$HTTP_CODE" = "200" ]; then
-            echo "✓ {{ .Chart.Name }} responding (HTTP $HTTP_CODE)"
-            exit 0
-          else
-            echo "✗ {{ .Chart.Name }} test failed (HTTP $HTTP_CODE)"
-            exit 1
-          fi
       restartPolicy: Never
+      containers:
+        - name: trigger
+          image: curlimages/curl:8.6.0
+          env:
+            - name: TESTING_API_URL
+              value: {{ .Values.tests.testingApiUrl | quote }}
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          command:
+            - sh
+            - -c
+            - |
+              echo "Triggering test run for {{ .Chart.Name }} via Testing Service..."
+              HTTP_CODE=$(curl -sf -w "%{http_code}" -o /tmp/response.json \
+                -X POST "$TESTING_API_URL/api/runs" \
+                -H "Content-Type: application/json" \
+                -d '{
+                  "app":        "{{ .Chart.Name }}",
+                  "cluster":    "in-cluster",
+                  "deployment": "{{ .Chart.Name }}",
+                  "namespace":  "'"$NAMESPACE"'",
+                  "image":      "curlimages/curl:8.6.0",
+                  "suite":      "{{ .Values.tests.suite }}",
+                  "command":    ["sh", "-c", "curl -sf http://{{ .Chart.Name }}.'"$NAMESPACE"'.svc.cluster.local/ && echo PASS || exit 1"]
+                }')
+              echo "Response (HTTP $HTTP_CODE):"
+              cat /tmp/response.json
+              if [ "$HTTP_CODE" -eq 201 ]; then
+                echo "✅ Test run triggered successfully"
+              else
+                echo "❌ Failed to trigger test run (HTTP $HTTP_CODE)"
+                exit 1
+              fi
   backoffLimit: 0
-  activeDeadlineSeconds: 120
+  activeDeadlineSeconds: 60
 {{- end }}
