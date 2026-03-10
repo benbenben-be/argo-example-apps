@@ -2,10 +2,14 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  generateName: {{ .Chart.Name }}-test-
+  name: {{ .Chart.Name }}-test
+  labels:
+    testing-service/role: test
+    app.kubernetes.io/component: test
+    app.kubernetes.io/part-of: {{ .Chart.Name }}
   annotations:
     argocd.argoproj.io/hook: PostSync
-    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
 spec:
   template:
     spec:
